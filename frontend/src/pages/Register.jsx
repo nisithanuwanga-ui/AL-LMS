@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Register(){
 
 return(
@@ -33,6 +35,12 @@ placeholder="Password"
 Register
 </button>
 
+<p className="mt-4 text-center">
+	Already registered? <Link to="/login" className="text-blue-900 underline">Login</Link>
+</p>
+<p className="mt-2 text-center">
+	<Link to="/" className="text-blue-900 underline">Back to home</Link>
+</p>
 
 </div>
 

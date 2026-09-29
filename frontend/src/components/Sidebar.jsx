@@ -14,31 +14,34 @@ function Sidebar(){
 
             <div className="space-y-4">
 
-                <Link 
+                <Link
+                to="/"
+                className="block hover:text-blue-300">
+                    Home
+                </Link>
+
+                <Link
                 to="/student/dashboard"
                 className="block hover:text-blue-300">
-                    Dashboard
+                    Student Dashboard
                 </Link>
 
-
-                <Link 
-                to="/courses"
+                <Link
+                to="/teacher/dashboard"
                 className="block hover:text-blue-300">
-                    My Courses
+                    Teacher Dashboard
                 </Link>
 
-
-                <Link 
-                to="/quiz"
+                <Link
+                to="/login"
                 className="block hover:text-blue-300">
-                    Quizzes
+                    Login
                 </Link>
 
-
-                <Link 
-                to="/profile"
+                <Link
+                to="/register"
                 className="block hover:text-blue-300">
-                    Profile
+                    Register
                 </Link>
 
 

@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Home() {
   return (
     <div className="min-h-screen bg-gray-100">
@@ -8,13 +10,13 @@ function Home() {
         </h1>
 
         <div>
-          <button className="mr-4">
+          <Link to="/login" className="mr-4">
             Login
-          </button>
+          </Link>
 
-          <button className="bg-white text-blue-900 px-4 py-2 rounded">
+          <Link to="/register" className="bg-white text-blue-900 px-4 py-2 rounded">
             Register
-          </button>
+          </Link>
         </div>
       </nav>
 
@@ -30,9 +32,9 @@ function Home() {
         </p>
 
 
-        <button className="mt-8 bg-blue-900 text-white px-8 py-3 rounded-lg">
+        <Link to="/register" className="inline-block mt-8 bg-blue-900 text-white px-8 py-3 rounded-lg">
           Get Started
-        </button>
+        </Link>
 
       </section>
 

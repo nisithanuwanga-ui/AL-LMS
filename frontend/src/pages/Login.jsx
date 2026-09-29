@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function Login(){
 
 return(
@@ -27,6 +29,12 @@ placeholder="Password"
 Login
 </button>
 
+<p className="mt-4 text-center">
+	Need an account? <Link to="/register" className="text-blue-900 underline">Register</Link>
+</p>
+<p className="mt-2 text-center">
+	<Link to="/" className="text-blue-900 underline">Back to home</Link>
+</p>
 
 </div>
 
