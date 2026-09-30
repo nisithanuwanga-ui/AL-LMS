@@ -1,54 +1,31 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 
 
 function Sidebar(){
 
     return(
 
-        <div className="w-64 min-h-screen bg-blue-900 text-white p-6">
+        <aside className="sidebar">
+            <Link to="/" className="brand">
+                <span className="brand-mark" aria-hidden="true">A</span>
+                <span>AL Learning Hub</span>
+            </Link>
 
-            <h2 className="text-2xl font-bold mb-8">
-                AL LMS
-            </h2>
+            <span className="sidebar-label">Workspace</span>
+            <nav className="sidebar-nav" aria-label="Main navigation">
+                <NavLink to="/" end className="sidebar-link">Home</NavLink>
+                <NavLink to="/student/dashboard" className="sidebar-link">Student Dashboard</NavLink>
+                <NavLink to="/teacher/dashboard" className="sidebar-link">Teacher Dashboard</NavLink>
+                <NavLink to="/login" className="sidebar-link">Login</NavLink>
+                <NavLink to="/register" className="sidebar-link">Register</NavLink>
+            </nav>
 
-
-            <div className="space-y-4">
-
-                <Link
-                to="/"
-                className="block hover:text-blue-300">
-                    Home
-                </Link>
-
-                <Link
-                to="/student/dashboard"
-                className="block hover:text-blue-300">
-                    Student Dashboard
-                </Link>
-
-                <Link
-                to="/teacher/dashboard"
-                className="block hover:text-blue-300">
-                    Teacher Dashboard
-                </Link>
-
-                <Link
-                to="/login"
-                className="block hover:text-blue-300">
-                    Login
-                </Link>
-
-                <Link
-                to="/register"
-                className="block hover:text-blue-300">
-                    Register
-                </Link>
-
-
+            <div className="sidebar-bottom">
+                <span className="sidebar-caption">Appearance</span>
+                <ThemeToggle />
             </div>
-
-
-        </div>
+        </aside>
 
     )
 

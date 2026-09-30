@@ -6,20 +6,24 @@ function StudentDashboard(){
 
 return(
 
-<div className="flex">
+<div className="app-shell dashboard-layout">
 
 <Sidebar/>
 
 
-<div className="flex-1 bg-gray-100 p-8">
+<main className="dashboard-main">
 
 
-<h1 className="text-3xl font-bold text-blue-900 mb-8">
-Student Dashboard
-</h1>
+<header className="dashboard-header">
+	<div>
+		<span className="eyebrow">Your learning at a glance</span>
+		<h1 className="page-title">Student Dashboard</h1>
+		<p className="dashboard-subtitle">Keep your focus on the next step.</p>
+	</div>
+</header>
 
 
-<div className="grid md:grid-cols-3 gap-6">
+<div className="metrics-grid">
 
 
 <DashboardCard
@@ -43,7 +47,7 @@ value="85%"
 </div>
 
 
-</div>
+</main>
 
 </div>
 

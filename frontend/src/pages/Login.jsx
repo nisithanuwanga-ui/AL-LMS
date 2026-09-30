@@ -1,43 +1,50 @@
 import { Link } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 function Login(){
 
 return(
 
-<div className="min-h-screen flex items-center justify-center bg-gray-100">
+<div className="app-shell auth-layout">
+	<div className="auth-topbar">
+		<Link to="/" className="brand">
+			<span className="brand-mark" aria-hidden="true">A</span>
+			<span>AL Learning Hub</span>
+		</Link>
+		<ThemeToggle />
+	</div>
 
-<div className="bg-white p-8 rounded-xl shadow w-96">
+	<main className="auth-panel glass-panel">
+		<span className="eyebrow">Good to have you back</span>
+		<h1 className="auth-title">Login</h1>
+		<p className="auth-copy">Pick up where your learning left off.</p>
 
-<h1 className="text-3xl font-bold text-blue-900 mb-6">
-Login
-</h1>
+		<label className="form-label" htmlFor="email">Email</label>
+		<input
+			id="email"
+			name="email"
+			type="email"
+			autoComplete="email"
+			className="form-control"
+			placeholder="you@example.com"
+		/>
 
+		<label className="form-label" htmlFor="password">Password</label>
+		<input
+			id="password"
+			name="password"
+			type="password"
+			autoComplete="current-password"
+			className="form-control"
+			placeholder="Enter your password"
+		/>
 
-<input 
-className="border p-3 w-full mb-4 rounded"
-placeholder="Email"
-/>
-
-
-<input 
-className="border p-3 w-full mb-4 rounded"
-placeholder="Password"
-/>
-
-
-<button className="bg-blue-900 text-white w-full py-3 rounded">
-Login
-</button>
-
-<p className="mt-4 text-center">
-	Need an account? <Link to="/register" className="text-blue-900 underline">Register</Link>
-</p>
-<p className="mt-2 text-center">
-	<Link to="/" className="text-blue-900 underline">Back to home</Link>
-</p>
-
-</div>
-
+		<button className="primary-button auth-submit">Login</button>
+		<p className="auth-footer">
+			Need an account? <Link to="/register" className="text-link">Register</Link>
+		</p>
+		<Link to="/" className="text-link auth-back">Back to home</Link>
+	</main>
 </div>
 
 )

@@ -6,21 +6,25 @@ function TeacherDashboard(){
 
 return(
 
-<div className="flex">
+<div className="app-shell dashboard-layout">
 
 
 <Sidebar/>
 
 
-<div className="flex-1 bg-gray-100 p-8">
+<main className="dashboard-main">
 
 
-<h1 className="text-3xl font-bold text-blue-900 mb-8">
-Teacher Dashboard
-</h1>
+<header className="dashboard-header">
+	<div>
+		<span className="eyebrow">Teaching workspace</span>
+		<h1 className="page-title">Teacher Dashboard</h1>
+		<p className="dashboard-subtitle">Your classes and course tools, together.</p>
+	</div>
+</header>
 
 
-<div className="grid md:grid-cols-3 gap-6">
+<div className="metrics-grid">
 
 
 <DashboardCard
@@ -44,40 +48,37 @@ value="20"
 </div>
 
 
-<div className="mt-10 bg-white p-6 rounded-xl shadow">
+<section className="quick-actions glass-panel">
 
 
-<h2 className="text-xl font-bold mb-4">
+<h2 className="quick-actions-title">
 Quick Actions
 </h2>
 
 
-<div className="space-y-3">
+<div className="actions-list">
 
 
-<button className="bg-blue-900 text-white px-5 py-3 rounded block">
+<button className="secondary-button">
 + Create Course
 </button>
 
 
-<button className="bg-blue-900 text-white px-5 py-3 rounded block">
+<button className="secondary-button">
 + Upload Lesson
 </button>
 
 
-<button className="bg-blue-900 text-white px-5 py-3 rounded block">
+<button className="secondary-button">
 + Create Quiz
 </button>
 
-
 </div>
 
+</section>
 
-</div>
 
-
-</div>
-
+</main>
 
 </div>
 

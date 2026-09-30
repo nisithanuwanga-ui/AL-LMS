@@ -1,83 +1,102 @@
 import { Link } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 
 function Home() {
   return (
-    <div className="min-h-screen bg-gray-100">
-
-      <nav className="bg-blue-900 text-white px-8 py-4 flex justify-between">
-        <h1 className="text-2xl font-bold">
-          AL Learning Hub
-        </h1>
-
-        <div>
-          <Link to="/login" className="mr-4">
-            Login
+    <div className="app-shell">
+      <nav className="site-nav">
+        <div className="site-nav-inner page-width">
+          <Link to="/" className="brand">
+            <span className="brand-mark" aria-hidden="true">A</span>
+            <span>AL Learning Hub</span>
           </Link>
 
-          <Link to="/register" className="bg-white text-blue-900 px-4 py-2 rounded">
-            Register
-          </Link>
+          <div className="nav-actions">
+            <ThemeToggle />
+            <Link to="/login" className="nav-link nav-login">Log in</Link>
+            <Link to="/register" className="primary-button">Join the hub</Link>
+          </div>
         </div>
       </nav>
 
+      <main>
+        <section className="home-hero page-width">
+          <div>
+            <span className="eyebrow">Your A/L study space</span>
+            <h1 className="hero-title">
+              Make every study session <span>count.</span>
+            </h1>
+            <p className="hero-copy">
+              A calmer place to learn, practise, and see how far you have come.
+              Keep your lessons and progress moving in one direction.
+            </p>
+            <Link to="/register" className="primary-button">Start learning <span aria-hidden="true">&nbsp;→</span></Link>
+          </div>
 
-      <section className="text-center py-20">
+          <div className="hero-visual glass-panel">
+            <div className="visual-topline">
+              <span className="visual-kicker">STUDY PLAN / THIS WEEK</span>
+              <span className="live-dot">On track</span>
+            </div>
+            <h2 className="visual-heading">A little progress, daily.</h2>
+            <p className="visual-subtitle">Your next steps are ready when you are.</p>
 
-        <h2 className="text-5xl font-bold text-blue-900">
-          Learn. Practice. Achieve.
-        </h2>
+            <div className="lesson-row">
+              <span className="lesson-index">01</span>
+              <div>
+                <div className="lesson-name">Functions &amp; graphs</div>
+                <div className="lesson-detail">Combined Mathematics · 18 min</div>
+              </div>
+              <span className="lesson-status">Ready</span>
+            </div>
+            <div className="lesson-row">
+              <span className="lesson-index">02</span>
+              <div>
+                <div className="lesson-name">Cell structure</div>
+                <div className="lesson-detail">Biology · 12 min</div>
+              </div>
+              <span className="lesson-status">Next</span>
+            </div>
+            <div className="lesson-row">
+              <span className="lesson-index">03</span>
+              <div>
+                <div className="lesson-name">Electric fields</div>
+                <div className="lesson-detail">Physics · 15 min</div>
+              </div>
+              <span className="lesson-status">Later</span>
+            </div>
+          </div>
+        </section>
 
-        <p className="mt-5 text-gray-600 text-lg">
-          A complete learning platform for A/L students
-        </p>
+        <section className="page-width" aria-labelledby="features-heading">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Built for steady progress</span>
+              <h2 className="section-title" id="features-heading">Study with a little more clarity.</h2>
+            </div>
+          </div>
 
-
-        <Link to="/register" className="inline-block mt-8 bg-blue-900 text-white px-8 py-3 rounded-lg">
-          Get Started
-        </Link>
-
-      </section>
-
-
-      <section className="grid md:grid-cols-3 gap-6 px-10">
-
-        <div className="bg-white p-6 rounded-xl shadow">
-          📚
-          <h3 className="text-xl font-bold">
-            Online Lessons
-          </h3>
-          <p>
-            Access lessons anytime.
-          </p>
-        </div>
-
-
-        <div className="bg-white p-6 rounded-xl shadow">
-          📝
-          <h3 className="text-xl font-bold">
-            Practice Quizzes
-          </h3>
-          <p>
-            Test your knowledge.
-          </p>
-        </div>
-
-
-        <div className="bg-white p-6 rounded-xl shadow">
-          📊
-          <h3 className="text-xl font-bold">
-            Track Progress
-          </h3>
-          <p>
-            Monitor your improvement.
-          </p>
-        </div>
-
-      </section>
-
-
+          <div className="feature-grid">
+            <article className="feature-panel glass-panel">
+              <span className="feature-number">01 / Learn</span>
+              <h3 className="feature-title">Lessons that fit your day</h3>
+              <p className="feature-copy">Return to your subjects and pick up right where you left off.</p>
+            </article>
+            <article className="feature-panel glass-panel">
+              <span className="feature-number">02 / Practise</span>
+              <h3 className="feature-title">Make knowledge stick</h3>
+              <p className="feature-copy">Use focused quizzes to turn revision into a repeatable habit.</p>
+            </article>
+            <article className="feature-panel glass-panel">
+              <span className="feature-number">03 / Reflect</span>
+              <h3 className="feature-title">See your progress clearly</h3>
+              <p className="feature-copy">Track completed lessons and keep your next goal in view.</p>
+            </article>
+          </div>
+        </section>
+      </main>
     </div>
-  )
+  );
 }
 
 export default Home;
