@@ -601,6 +601,234 @@ input:focus-visible {
 	gap: 10px;
 }
 
+.lesson-form {
+	margin-top: 24px;
+	padding-top: 22px;
+	border-top: 1px solid var(--border);
+}
+
+.lesson-form-heading,
+.lessons-heading,
+.lesson-card-heading,
+.lesson-form-actions {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+}
+
+.lesson-form-heading h3,
+.lesson-card-heading h3 {
+	margin: 0;
+	font-size: 16px;
+}
+
+.lesson-form-close {
+	padding: 6px 0;
+	border: 0;
+	background: transparent;
+	color: var(--muted);
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.lesson-form-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+	margin-top: 18px;
+}
+
+.lesson-form-field {
+	display: grid;
+	gap: 7px;
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 800;
+}
+
+.lesson-form-field input,
+.lesson-form-field select,
+.lesson-form-field textarea {
+	width: 100%;
+	min-height: 44px;
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: 9px;
+	background: var(--field);
+	color: var(--ink);
+	font: inherit;
+	font-weight: 400;
+}
+
+.lesson-form-field textarea {
+	resize: vertical;
+}
+
+.lesson-form-field-wide {
+	grid-column: 1 / -1;
+}
+
+.lesson-form-actions {
+	justify-content: flex-end;
+	margin-top: 18px;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+	cursor: wait;
+	opacity: 0.65;
+}
+
+.form-feedback {
+	margin: 14px 0 0;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.form-feedback-error,
+.lessons-feedback-error {
+	color: var(--danger);
+}
+
+.lessons-section {
+	margin-top: 34px;
+}
+
+.lessons-heading {
+	margin-bottom: 16px;
+}
+
+.lessons-heading .quick-actions-title {
+	margin: 10px 0 0;
+}
+
+.lesson-filters {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(220px, 0.6fr);
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.lesson-filter-field {
+	display: grid;
+	gap: 7px;
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 800;
+}
+
+.lesson-filter-field input,
+.lesson-filter-field select {
+	width: 100%;
+	min-height: 44px;
+	padding: 9px 12px;
+	border: 1px solid var(--border);
+	border-radius: 9px;
+	background: var(--field);
+	color: var(--ink);
+	font: inherit;
+	font-weight: 400;
+}
+
+.lessons-count {
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.lessons-feedback {
+	margin: 0;
+	padding: 20px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	background: var(--surface);
+	color: var(--muted);
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+.lessons-feedback-error p {
+	margin: 0 0 14px;
+}
+
+.lessons-list {
+	display: grid;
+	gap: 12px;
+}
+
+.lesson-card {
+	padding: 20px;
+	border-radius: 12px;
+}
+
+.lesson-card-heading {
+	justify-content: flex-start;
+	flex-wrap: wrap;
+}
+
+.lesson-card-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-left: auto;
+}
+
+.lesson-card-actions .secondary-button {
+	min-height: 36px;
+	padding-inline: 12px;
+}
+
+.lesson-delete-button {
+	color: var(--danger);
+}
+
+.lesson-card-subject {
+	margin: 8px 0;
+	color: var(--accent);
+	font-size: 12px;
+	font-weight: 800;
+}
+
+.lesson-card-description {
+	margin: 0;
+	color: var(--muted);
+	font-size: 13px;
+	line-height: 1.6;
+	white-space: pre-wrap;
+}
+
+.lesson-badge {
+	padding: 4px 8px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--accent) 12%, transparent);
+	color: var(--accent);
+	font-size: 10px;
+	font-weight: 800;
+	text-transform: capitalize;
+}
+
+.lesson-badge-draft {
+	background: color-mix(in srgb, var(--muted) 14%, transparent);
+	color: var(--muted);
+}
+
+.lesson-card-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin-top: 14px;
+}
+
+.lesson-card-links a {
+	color: var(--accent);
+	font-size: 12px;
+	font-weight: 800;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
 .auth-layout {
 	display: grid;
 	min-height: 100vh;
@@ -782,6 +1010,18 @@ input:focus-visible {
 
 	.metrics-grid {
 		grid-template-columns: 1fr;
+	}
+
+	.lesson-form-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.lesson-filters {
+		grid-template-columns: 1fr;
+	}
+
+	.lesson-form-field-wide {
+		grid-column: auto;
 	}
 
 	.metric-card {

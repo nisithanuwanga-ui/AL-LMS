@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 require("dotenv").config();
+const lessonRoutes = require("./routes/lessonRoutes");
 
 const app = express();
 
@@ -13,6 +14,8 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(cors({ origin: CLIENT_URL }));
 app.use(express.json());
+
+app.use("/api/lessons", lessonRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "AL LMS Backend API is running!" });
