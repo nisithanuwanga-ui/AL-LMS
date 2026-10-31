@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 const lessonRoutes = require("./routes/lessonRoutes");
 const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -24,7 +25,9 @@ app.use(cookieParser());
 
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/auth", (error, req, res, next) => {
+app.use("/api/admin", adminRoutes);
+
+function handleApiError(error, req, res, next) {
   if (res.headersSent) {
     return next(error);
   }
@@ -47,7 +50,10 @@ app.use("/api/auth", (error, req, res, next) => {
     success: false,
     message: "An unexpected server error occurred.",
   });
-});
+}
+
+app.use("/api/auth", handleApiError);
+app.use("/api/admin", handleApiError);
 
 app.get("/", (req, res) => {
   res.json({ message: "AL LMS Backend API is running!" });
