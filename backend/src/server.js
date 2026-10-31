@@ -4,6 +4,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const lessonRoutes = require("./routes/lessonRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -16,6 +17,31 @@ app.use(cors({ origin: CLIENT_URL }));
 app.use(express.json());
 
 app.use("/api/lessons", lessonRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/auth", (error, req, res, next) => {
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  if (error.type === "entity.parse.failed") {
+    return res.status(400).json({
+      success: false,
+      message: "Request body must be valid JSON.",
+    });
+  }
+
+  if (error.type === "entity.too.large") {
+    return res.status(413).json({
+      success: false,
+      message: "Request body is too large.",
+    });
+  }
+
+  return res.status(500).json({
+    success: false,
+    message: "An unexpected server error occurred.",
+  });
+});
 
 app.get("/", (req, res) => {
   res.json({ message: "AL LMS Backend API is running!" });
