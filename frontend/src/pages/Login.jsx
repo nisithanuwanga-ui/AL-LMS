@@ -1,54 +1,58 @@
 import { Link } from "react-router-dom";
+import BrandLockup from "../components/BrandLockup";
+import LanguageSelector from "../components/LanguageSelector";
 import ThemeToggle from "../components/ThemeToggle";
+import { useLanguage } from "../contexts/useLanguage";
 
-function Login(){
+function Login() {
+  const { t } = useLanguage();
 
-return(
+  return (
+    <div className="app-shell auth-layout">
+      <div className="auth-topbar">
+        <BrandLockup />
+        <div className="auth-preferences">
+          <LanguageSelector />
+          <ThemeToggle />
+        </div>
+      </div>
 
-<div className="app-shell auth-layout">
-	<div className="auth-topbar">
-		<Link to="/" className="brand">
-			<span className="brand-mark" aria-hidden="true">A</span>
-			<span>AL Learning Hub</span>
-		</Link>
-		<ThemeToggle />
-	</div>
+      <main className="auth-panel glass-panel">
+        <span className="eyebrow">{t("auth.welcomeBack")}</span>
+        <h1 className="auth-title">{t("auth.loginTitle")}</h1>
+        <p className="auth-copy">{t("auth.loginCopy")}</p>
 
-	<main className="auth-panel glass-panel">
-		<span className="eyebrow">Good to have you back</span>
-		<h1 className="auth-title">Login</h1>
-		<p className="auth-copy">Pick up where your learning left off.</p>
+        <label className="form-label" htmlFor="email">{t("auth.email")}</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          className="form-control"
+          placeholder={t("auth.emailPlaceholder")}
+        />
 
-		<label className="form-label" htmlFor="email">Email</label>
-		<input
-			id="email"
-			name="email"
-			type="email"
-			autoComplete="email"
-			className="form-control"
-			placeholder="you@example.com"
-		/>
+        <label className="form-label" htmlFor="password">{t("auth.password")}</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          className="form-control"
+          placeholder={t("auth.passwordPlaceholder")}
+        />
 
-		<label className="form-label" htmlFor="password">Password</label>
-		<input
-			id="password"
-			name="password"
-			type="password"
-			autoComplete="current-password"
-			className="form-control"
-			placeholder="Enter your password"
-		/>
-
-		<button className="primary-button auth-submit">Login</button>
-		<p className="auth-footer">
-			Need an account? <Link to="/register" className="text-link">Register</Link>
-		</p>
-		<Link to="/" className="text-link auth-back">Back to home</Link>
-	</main>
-</div>
-
-)
-
+        <div className="auth-notice" role="note">{t("auth.loginNotice")}</div>
+        <button className="primary-button auth-submit" type="button" disabled>
+          {t("auth.loginSoon")}
+        </button>
+        <p className="auth-footer">
+          {t("auth.needAccount")} <Link to="/register" className="text-link">{t("auth.register")}</Link>
+        </p>
+        <Link to="/" className="text-link auth-back">{t("auth.backHome")}</Link>
+      </main>
+    </div>
+  );
 }
 
 export default Login;

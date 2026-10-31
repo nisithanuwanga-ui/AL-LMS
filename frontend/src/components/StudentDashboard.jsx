@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
 import DashboardCard from "./DashboardCard";
+import { useLanguage } from "../contexts/useLanguage";
+import { languageLocales } from "../i18n/translations";
 
 const LESSONS_API_URL = "http://localhost:5000/api/lessons";
 const SUBJECTS = [
@@ -36,13 +38,13 @@ function getSafeExternalUrl(value) {
   return null;
 }
 
-function formatCreatedDate(value) {
+function formatCreatedDate(value, locale) {
   if (!value) return null;
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -50,6 +52,8 @@ function formatCreatedDate(value) {
 }
 
 function StudentDashboard() {
+  const { language, t } = useLanguage();
+  const locale = languageLocales[language];
   const [lessons, setLessons] = useState([]);
   const [subject, setSubject] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -72,11 +76,11 @@ function StudentDashboard() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(getApiError(data, "Unable to load published lessons."));
+          throw new Error(getApiError(data, t("student.loadError")));
         }
 
         if (!Array.isArray(data.data)) {
-          throw new Error("The server returned an invalid lessons response.");
+          throw new Error(t("student.invalidResponse"));
         }
 
         if (!controller.signal.aborted) {
@@ -87,7 +91,7 @@ function StudentDashboard() {
           setError(
             requestError instanceof Error
               ? requestError.message
-              : "Unable to load published lessons.",
+              : t("student.loadError"),
           );
         }
       } finally {
@@ -98,7 +102,17 @@ function StudentDashboard() {
     loadLessons();
 
     return () => controller.abort();
-  }, [subject, retryCount]);
+  }, [subject, retryCount, t]);
+
+  function getSubjectLabel(value) {
+    const subjectKeys = {
+      Physics: "subject.physics",
+      Chemistry: "subject.chemistry",
+      Biology: "subject.biology",
+      "Combined Mathematics": "subject.maths",
+    };
+    return subjectKeys[value] ? t(subjectKeys[value]) : value;
+  }
 
   return (
     <div className="app-shell dashboard-layout">
@@ -107,17 +121,15 @@ function StudentDashboard() {
       <main className="dashboard-main">
         <header className="dashboard-header">
           <div>
-            <span className="eyebrow">Your learning at a glance</span>
-            <h1 className="page-title">Student Dashboard</h1>
-            <p className="dashboard-subtitle">
-              Explore published lessons and continue learning.
-            </p>
+            <span className="eyebrow">{t("student.eyebrow")}</span>
+            <h1 className="page-title">{t("student.title")}</h1>
+            <p className="dashboard-subtitle">{t("student.subtitle")}</p>
           </div>
         </header>
 
         <div className="metrics-grid student-metrics-grid">
           <DashboardCard
-            title="Published Lessons"
+            title={t("student.publishedCount")}
             value={isLoading ? "…" : lessons.length}
           />
         </div>
@@ -128,23 +140,23 @@ function StudentDashboard() {
         >
           <div className="student-lessons-heading">
             <div>
-              <span className="eyebrow">Ready to learn</span>
+              <span className="eyebrow">{t("student.ready")}</span>
               <h2 className="quick-actions-title" id="student-lessons-title">
-                Published Lessons
+                {t("student.lessons")}
               </h2>
             </div>
 
             <label className="student-subject-filter">
-              <span>Subject</span>
+              <span>{t("student.subject")}</span>
               <select
                 value={subject}
                 onChange={(event) => setSubject(event.target.value)}
-                aria-label="Filter published lessons by subject"
+                aria-label={t("student.filterLabel")}
               >
-                <option value="">All Subjects</option>
+                <option value="">{t("subject.all")}</option>
                 {SUBJECTS.map((lessonSubject) => (
                   <option key={lessonSubject} value={lessonSubject}>
-                    {lessonSubject}
+                    {getSubjectLabel(lessonSubject)}
                   </option>
                 ))}
               </select>
@@ -153,7 +165,7 @@ function StudentDashboard() {
 
           {isLoading ? (
             <p className="lessons-feedback" role="status">
-              Loading published lessons…
+              {t("student.loading")}
             </p>
           ) : error ? (
             <div
@@ -166,21 +178,21 @@ function StudentDashboard() {
                 type="button"
                 onClick={() => setRetryCount((count) => count + 1)}
               >
-                Try again
+                {t("student.retry")}
               </button>
             </div>
           ) : lessons.length === 0 ? (
             <p className="lessons-feedback">
               {subject
-                ? `No published ${subject} lessons are available yet.`
-                : "No published lessons are available yet."}
+                ? t("student.subjectEmpty", { subject: getSubjectLabel(subject) })
+                : t("student.empty")}
             </p>
           ) : (
             <div className="student-lessons-list">
               {lessons.map((lesson) => {
                 const lessonUrl = getSafeExternalUrl(lesson.lessonUrl);
                 const notesUrl = getSafeExternalUrl(lesson.notesUrl);
-                const createdDate = formatCreatedDate(lesson.createdAt);
+                const createdDate = formatCreatedDate(lesson.createdAt, locale);
 
                 return (
                   <article
@@ -189,7 +201,7 @@ function StudentDashboard() {
                   >
                     <div className="student-lesson-header">
                       <div>
-                        <p className="student-lesson-subject">{lesson.subject}</p>
+                        <p className="student-lesson-subject">{getSubjectLabel(lesson.subject)}</p>
                         <h3>{lesson.title}</h3>
                       </div>
                       {createdDate && (
@@ -197,7 +209,7 @@ function StudentDashboard() {
                           className="student-lesson-date"
                           dateTime={lesson.createdAt}
                         >
-                          Published {createdDate}
+                          {t("student.publishedOn")} {createdDate}
                         </time>
                       )}
                     </div>
@@ -212,7 +224,7 @@ function StudentDashboard() {
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            Watch lesson
+                            {t("student.watch")}
                           </a>
                         )}
                         {notesUrl && (
@@ -221,7 +233,7 @@ function StudentDashboard() {
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            View notes
+                            {t("student.notes")}
                           </a>
                         )}
                       </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardCard from "../components/DashboardCard";
+import { useLanguage } from "../contexts/useLanguage";
 
 const LESSONS_API_URL = "http://localhost:5000/api/lessons";
 const SUBJECTS = [
@@ -38,6 +39,7 @@ function lessonMatchesFilters(lesson, search, subject) {
 }
 
 function TeacherDashboard() {
+  const { t } = useLanguage();
   const [lessons, setLessons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lessonError, setLessonError] = useState("");
@@ -63,15 +65,15 @@ function TeacherDashboard() {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(getApiError(data, "Unable to load lessons."));
+      throw new Error(getApiError(data, t("teacher.loadError")));
     }
 
     if (!Array.isArray(data.data)) {
-      throw new Error("The server returned an invalid lessons response.");
+      throw new Error(t("teacher.invalidResponse"));
     }
 
     return data.data;
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -87,7 +89,7 @@ function TeacherDashboard() {
         if (!controller.signal.aborted) setLessons(loadedLessons);
       } catch (error) {
         if (!controller.signal.aborted && error.name !== "AbortError") {
-          setLessonError(getErrorMessage(error, "Unable to load lessons."));
+          setLessonError(getErrorMessage(error, t("teacher.loadError")));
         }
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -98,7 +100,17 @@ function TeacherDashboard() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [requestLessons, search, subjectFilter, refreshKey]);
+  }, [requestLessons, search, subjectFilter, refreshKey, t]);
+
+  function getSubjectLabel(value) {
+    const subjectKeys = {
+      Physics: "subject.physics",
+      Chemistry: "subject.chemistry",
+      Biology: "subject.biology",
+      "Combined Mathematics": "subject.maths",
+    };
+    return subjectKeys[value] ? t(subjectKeys[value]) : value;
+  }
 
   function handleFormChange(event) {
     const { name, value } = event.target;
@@ -143,15 +155,15 @@ function TeacherDashboard() {
     const errors = [];
 
     if (title.length < 3 || title.length > 150) {
-      errors.push("Title must contain between 3 and 150 characters.");
+      errors.push(t("teacher.titleValidation"));
     }
 
     if (!SUBJECTS.includes(formData.subject)) {
-      errors.push("Please select a valid subject.");
+      errors.push(t("teacher.subjectValidation"));
     }
 
     if (description.length === 0 || description.length > 2000) {
-      errors.push("Description is required and cannot exceed 2000 characters.");
+      errors.push(t("teacher.descriptionValidation"));
     }
 
     for (const [label, value] of [
@@ -162,10 +174,14 @@ function TeacherDashboard() {
         try {
           const url = new URL(value.trim());
           if (url.protocol !== "http:" && url.protocol !== "https:") {
-            errors.push(`${label} must use http or https.`);
+            errors.push(t("teacher.urlHttpValidation", {
+              label: t(label === "Lesson URL" ? "teacher.urlLessonLabel" : "teacher.urlNotesLabel"),
+            }));
           }
         } catch {
-          errors.push(`${label} must be a valid URL.`);
+          errors.push(t("teacher.urlValidation", {
+            label: t(label === "Lesson URL" ? "teacher.urlLessonLabel" : "teacher.urlNotesLabel"),
+          }));
         }
       }
     }
@@ -202,13 +218,13 @@ function TeacherDashboard() {
         throw new Error(
           getApiError(
             data,
-            `Unable to ${editingLesson ? "update" : "create"} the lesson.`,
+            t(editingLesson ? "teacher.updateError" : "teacher.createError"),
           ),
         );
       }
 
       if (!data.data || typeof data.data !== "object") {
-        throw new Error("The server did not return the saved lesson.");
+        throw new Error(t("teacher.savedError"));
       }
 
       const savedLesson = data.data;
@@ -229,7 +245,7 @@ function TeacherDashboard() {
       setFormError(
         getErrorMessage(
           error,
-          `Unable to ${editingLesson ? "update" : "create"} the lesson.`,
+          t(editingLesson ? "teacher.updateError" : "teacher.createError"),
         ),
       );
     } finally {
@@ -241,7 +257,7 @@ function TeacherDashboard() {
   async function handleDelete(lesson) {
     if (deletionLocks.current.size > 0) return;
     const confirmed = window.confirm(
-      `Delete "${lesson.title}"? This action cannot be undone.`,
+      t("teacher.confirmDelete", { title: lesson.title }),
     );
     if (!confirmed) return;
 
@@ -257,7 +273,7 @@ function TeacherDashboard() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(getApiError(data, "Unable to delete the lesson."));
+        throw new Error(getApiError(data, t("teacher.deleteError")));
       }
 
       setLessons((currentLessons) =>
@@ -265,7 +281,7 @@ function TeacherDashboard() {
       );
       setRefreshKey((key) => key + 1);
     } catch (error) {
-      setActionError(getErrorMessage(error, "Unable to delete the lesson."));
+      setActionError(getErrorMessage(error, t("teacher.deleteError")));
     } finally {
       deletionLocks.current.delete(lesson._id);
       setDeletingLessonId("");
@@ -279,27 +295,25 @@ function TeacherDashboard() {
       <main className="dashboard-main">
         <header className="dashboard-header">
           <div>
-            <span className="eyebrow">Teaching workspace</span>
-            <h1 className="page-title">Teacher Dashboard</h1>
-            <p className="dashboard-subtitle">
-              Your classes and course tools, together.
-            </p>
+            <span className="eyebrow">{t("teacher.eyebrow")}</span>
+            <h1 className="page-title">{t("teacher.title")}</h1>
+            <p className="dashboard-subtitle">{t("teacher.subtitle")}</p>
           </div>
         </header>
 
         <div className="metrics-grid">
-          <DashboardCard title="Total Students" value="250" />
-          <DashboardCard title="Total Lessons" value={isLoading ? "…" : lessons.length} />
-          <DashboardCard title="Total Quizzes" value="20" />
+          <DashboardCard title={t("teacher.totalStudents")} value="250" />
+          <DashboardCard title={t("teacher.totalLessons")} value={isLoading ? "…" : lessons.length} />
+          <DashboardCard title={t("teacher.totalQuizzes")} value="20" />
         </div>
 
         <section className="quick-actions glass-panel" aria-labelledby="quick-actions-title">
           <h2 className="quick-actions-title" id="quick-actions-title">
-            Quick Actions
+            {t("teacher.quickActions")}
           </h2>
           <div className="actions-list">
             <button className="secondary-button" type="button">
-              + Create Course
+              {t("teacher.createCourse")}
             </button>
             <button
               className="secondary-button"
@@ -307,25 +321,25 @@ function TeacherDashboard() {
               onClick={openCreateForm}
               disabled={isSubmitting}
             >
-              + Upload Lesson
+              {t("teacher.uploadLesson")}
             </button>
             <button className="secondary-button" type="button">
-              + Create Quiz
+              {t("teacher.createQuiz")}
             </button>
           </div>
 
           {isFormOpen && (
             <form className="lesson-form" onSubmit={handleSubmit} noValidate>
               <div className="lesson-form-heading">
-                <h3>{editingLesson ? "Edit lesson" : "Upload a lesson"}</h3>
+                <h3>{editingLesson ? t("teacher.editLesson") : t("teacher.uploadTitle")}</h3>
                 <button
                   className="lesson-form-close"
                   type="button"
                   onClick={closeForm}
-                  aria-label="Close lesson form"
+                  aria-label={t("teacher.closeForm")}
                   disabled={isSubmitting}
                 >
-                  Close
+                  {t("teacher.close")}
                 </button>
               </div>
 
@@ -337,7 +351,7 @@ function TeacherDashboard() {
 
               <div className="lesson-form-grid">
                 <label className="lesson-form-field">
-                  <span>Lesson title</span>
+                  <span>{t("teacher.lessonTitle")}</span>
                   <input
                     name="title"
                     value={formData.title}
@@ -350,7 +364,7 @@ function TeacherDashboard() {
                 </label>
 
                 <label className="lesson-form-field">
-                  <span>Subject</span>
+                  <span>{t("teacher.subject")}</span>
                   <select
                     name="subject"
                     value={formData.subject}
@@ -358,17 +372,17 @@ function TeacherDashboard() {
                     required
                     disabled={isSubmitting}
                   >
-                    <option value="">Select a subject</option>
+                    <option value="">{t("teacher.selectSubject")}</option>
                     {SUBJECTS.map((subject) => (
                       <option key={subject} value={subject}>
-                        {subject}
+                        {getSubjectLabel(subject)}
                       </option>
                     ))}
                   </select>
                 </label>
 
                 <label className="lesson-form-field lesson-form-field-wide">
-                  <span>Description</span>
+                  <span>{t("teacher.description")}</span>
                   <textarea
                     name="description"
                     value={formData.description}
@@ -381,7 +395,7 @@ function TeacherDashboard() {
                 </label>
 
                 <label className="lesson-form-field">
-                  <span>Lesson URL (optional)</span>
+                  <span>{t("teacher.lessonUrl")}</span>
                   <input
                     name="lessonUrl"
                     type="url"
@@ -392,7 +406,7 @@ function TeacherDashboard() {
                 </label>
 
                 <label className="lesson-form-field">
-                  <span>Notes URL (optional)</span>
+                  <span>{t("teacher.notesUrl")}</span>
                   <input
                     name="notesUrl"
                     type="url"
@@ -403,15 +417,15 @@ function TeacherDashboard() {
                 </label>
 
                 <label className="lesson-form-field">
-                  <span>Status</span>
+                  <span>{t("teacher.status")}</span>
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleFormChange}
                     disabled={isSubmitting}
                   >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
+                    <option value="draft">{t("teacher.draft")}</option>
+                    <option value="published">{t("teacher.published")}</option>
                   </select>
                 </label>
               </div>
@@ -423,12 +437,12 @@ function TeacherDashboard() {
                   onClick={closeForm}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t("teacher.cancel")}
                 </button>
                 <button className="primary-button" type="submit" disabled={isSubmitting}>
                   {isSubmitting
-                    ? editingLesson ? "Saving…" : "Uploading…"
-                    : editingLesson ? "Save Changes" : "Upload Lesson"}
+                    ? editingLesson ? t("teacher.saving") : t("teacher.uploading")
+                    : editingLesson ? t("teacher.saveChanges") : t("teacher.uploadSubmit")}
                 </button>
               </div>
             </form>
@@ -438,39 +452,41 @@ function TeacherDashboard() {
         <section className="lessons-section" aria-labelledby="lessons-title">
           <div className="lessons-heading">
             <div>
-              <span className="eyebrow">Your teaching library</span>
+              <span className="eyebrow">{t("teacher.library")}</span>
               <h2 className="quick-actions-title" id="lessons-title">
-                Lessons
+                {t("teacher.lessons")}
               </h2>
             </div>
             <span className="lessons-count">
               {!isLoading && !lessonError &&
-                `${lessons.length} ${lessons.length === 1 ? "lesson" : "lessons"}`}
+                t(lessons.length === 1 ? "teacher.lessonCountOne" : "teacher.lessonCount", {
+                  count: lessons.length,
+                })}
             </span>
           </div>
 
           <div className="lesson-filters">
             <label className="lesson-filter-field">
-              <span>Search by title</span>
+              <span>{t("teacher.searchLabel")}</span>
               <input
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search lessons"
-                aria-label="Search lessons by title"
+                placeholder={t("teacher.searchPlaceholder")}
+                aria-label={t("teacher.searchAria")}
               />
             </label>
             <label className="lesson-filter-field">
-              <span>Filter by subject</span>
+              <span>{t("teacher.filterSubject")}</span>
               <select
                 value={subjectFilter}
                 onChange={(event) => setSubjectFilter(event.target.value)}
-                aria-label="Filter lessons by subject"
+                aria-label={t("teacher.filterAria")}
               >
-                <option value="">All subjects</option>
+                <option value="">{t("subject.all")}</option>
                 {SUBJECTS.map((subject) => (
                   <option key={subject} value={subject}>
-                    {subject}
+                    {getSubjectLabel(subject)}
                   </option>
                 ))}
               </select>
@@ -484,7 +500,7 @@ function TeacherDashboard() {
           )}
 
           {isLoading ? (
-            <p className="lessons-feedback" role="status">Loading lessons…</p>
+            <p className="lessons-feedback" role="status">{t("teacher.loading")}</p>
           ) : lessonError ? (
             <div className="lessons-feedback lessons-feedback-error" role="alert">
               <p>{lessonError}</p>
@@ -493,14 +509,14 @@ function TeacherDashboard() {
                 type="button"
                 onClick={() => setRefreshKey((key) => key + 1)}
               >
-                Try again
+                {t("teacher.retry")}
               </button>
             </div>
           ) : lessons.length === 0 ? (
             <p className="lessons-feedback">
               {search.trim() || subjectFilter
-                ? "No lessons match your search or subject filter."
-                : "No lessons yet. Use “Upload Lesson” to add your first lesson."}
+                ? t("teacher.emptyFiltered")
+                : t("teacher.empty")}
             </p>
           ) : (
             <div className="lessons-list">
@@ -510,7 +526,7 @@ function TeacherDashboard() {
                     <div className="lesson-card-heading">
                       <h3>{lesson.title}</h3>
                       <span className={`lesson-badge lesson-badge-${lesson.status}`}>
-                        {lesson.status}
+                        {t(`teacher.${lesson.status}`)}
                       </span>
                       <div className="lesson-card-actions">
                         <button
@@ -519,7 +535,7 @@ function TeacherDashboard() {
                           onClick={() => openEditForm(lesson)}
                           disabled={isSubmitting || Boolean(deletingLessonId)}
                         >
-                          Edit
+                          {t("teacher.edit")}
                         </button>
                         <button
                           className="secondary-button lesson-delete-button"
@@ -527,22 +543,22 @@ function TeacherDashboard() {
                           onClick={() => handleDelete(lesson)}
                           disabled={Boolean(deletingLessonId) || isSubmitting || isFormOpen}
                         >
-                          {deletingLessonId === lesson._id ? "Deleting…" : "Delete"}
+                          {deletingLessonId === lesson._id ? t("teacher.deleting") : t("teacher.delete")}
                         </button>
                       </div>
                     </div>
-                    <p className="lesson-card-subject">{lesson.subject}</p>
+                    <p className="lesson-card-subject">{getSubjectLabel(lesson.subject)}</p>
                     <p className="lesson-card-description">{lesson.description}</p>
                     {(lesson.lessonUrl || lesson.notesUrl) && (
                       <div className="lesson-card-links">
                         {lesson.lessonUrl && (
                           <a href={lesson.lessonUrl} target="_blank" rel="noreferrer">
-                            Open lesson
+                            {t("teacher.openLesson")}
                           </a>
                         )}
                         {lesson.notesUrl && (
                           <a href={lesson.notesUrl} target="_blank" rel="noreferrer">
-                            Open notes
+                            {t("teacher.openNotes")}
                           </a>
                         )}
                       </div>

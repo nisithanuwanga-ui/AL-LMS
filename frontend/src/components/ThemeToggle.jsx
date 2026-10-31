@@ -1,8 +1,11 @@
 import { useTheme } from "../contexts/useTheme";
+import { useLanguage } from "../contexts/useLanguage";
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const isDark = theme === "dark";
+  const targetTheme = isDark ? "light" : "dark";
 
   return (
     <button
@@ -10,13 +13,13 @@ function ThemeToggle() {
       className="theme-toggle"
       role="switch"
       aria-checked={isDark}
-      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+      aria-label={t("theme.switchTo", { theme: t(`theme.${targetTheme}`).toLowerCase() })}
       onClick={toggleTheme}
     >
       <span className="theme-toggle-track" aria-hidden="true">
         <span className="theme-toggle-knob" />
       </span>
-      <span>{isDark ? "Dark" : "Light"}</span>
+      <span>{t(`theme.${isDark ? "dark" : "light"}`)}</span>
     </button>
   );
 }

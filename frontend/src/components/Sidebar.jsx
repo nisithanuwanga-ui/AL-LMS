@@ -1,34 +1,34 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import BrandLockup from "./BrandLockup";
+import LanguageSelector from "./LanguageSelector";
 import ThemeToggle from "./ThemeToggle";
+import { useLanguage } from "../contexts/useLanguage";
 
+function Sidebar() {
+  const { t } = useLanguage();
 
-function Sidebar(){
+  return (
+    <aside className="sidebar">
+      <BrandLockup className="sidebar-brand" />
 
-    return(
+      <span className="sidebar-label">{t("nav.workspace")}</span>
+      <nav className="sidebar-nav" aria-label={t("nav.main")}>
+        <NavLink to="/" end className="sidebar-link">{t("nav.home")}</NavLink>
+        <NavLink to="/student/dashboard" className="sidebar-link">{t("nav.studentDashboard")}</NavLink>
+        <NavLink to="/teacher/dashboard" className="sidebar-link">{t("nav.teacherDashboard")}</NavLink>
+        <NavLink to="/login" className="sidebar-link">{t("nav.login")}</NavLink>
+        <NavLink to="/register" className="sidebar-link">{t("nav.register")}</NavLink>
+      </nav>
 
-        <aside className="sidebar">
-            <Link to="/" className="brand">
-                <span className="brand-mark" aria-hidden="true">A</span>
-                <span>AL Learning Hub</span>
-            </Link>
-
-            <span className="sidebar-label">Workspace</span>
-            <nav className="sidebar-nav" aria-label="Main navigation">
-                <NavLink to="/" end className="sidebar-link">Home</NavLink>
-                <NavLink to="/student/dashboard" className="sidebar-link">Student Dashboard</NavLink>
-                <NavLink to="/teacher/dashboard" className="sidebar-link">Teacher Dashboard</NavLink>
-                <NavLink to="/login" className="sidebar-link">Login</NavLink>
-                <NavLink to="/register" className="sidebar-link">Register</NavLink>
-            </nav>
-
-            <div className="sidebar-bottom">
-                <span className="sidebar-caption">Appearance</span>
-                <ThemeToggle />
-            </div>
-        </aside>
-
-    )
-
+      <div className="sidebar-bottom">
+        <span className="sidebar-caption">{t("nav.appearance")}</span>
+        <div className="sidebar-preferences">
+          <LanguageSelector />
+          <ThemeToggle />
+        </div>
+      </div>
+    </aside>
+  );
 }
 
 export default Sidebar;
