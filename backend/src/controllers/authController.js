@@ -1,4 +1,13 @@
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const {
+  AUTH_COOKIE_NAME,
+  JWT_EXPIRES_IN_SECONDS,
+  getAuthCookieOptions,
+  getJwtSecret,
+  toPublicUser,
+} = require("../utils/authConfig");
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_NAME_LENGTH = 2;
@@ -123,7 +132,110 @@ function createRegistrationHandler(role, approvalStatus) {
 const registerStudent = createRegistrationHandler("student", "approved");
 const registerTeacher = createRegistrationHandler("teacher", "pending");
 
+async function login(req, res) {
+  const body = req.body;
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return res.status(400).json({
+      success: false,
+      message: "A JSON object is required.",
+    });
+  }
+
+  if (["role", "approvalStatus", "isActive"].some((field) =>
+    Object.hasOwn(body, field),
+  )) {
+    return res.status(400).json({
+      success: false,
+      message: "Role, approval status, and active status cannot be supplied.",
+    });
+  }
+
+  const { email, password } = body;
+  if (
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    !email.trim() ||
+    !password.trim() ||
+    !EMAIL_PATTERN.test(email.trim().toLowerCase())
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required.",
+    });
+  }
+
+  let secret;
+  try {
+    secret = getJwtSecret();
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Authentication is temporarily unavailable.",
+    });
+  }
+
+  try {
+    const user = await User.findOne({
+      email: email.trim().toLowerCase(),
+    }).select("+password");
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
+    }
+
+    if (!user.isActive || (user.role === "teacher" && user.approvalStatus === "rejected")) {
+      return res.status(403).json({
+        success: false,
+        message: "This account is not permitted to sign in.",
+      });
+    }
+
+    const token = jwt.sign(
+      { sub: user.id, role: user.role },
+      secret,
+      {
+        algorithm: "HS256",
+        expiresIn: JWT_EXPIRES_IN_SECONDS,
+      },
+    );
+
+    res.cookie(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
+    return res.status(200).json({
+      success: true,
+      message: "Login successful.",
+      user: toPublicUser(user),
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "An unexpected error occurred during login.",
+    });
+  }
+}
+
+function getCurrentUser(req, res) {
+  return res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+}
+
+function logout(_req, res) {
+  const { maxAge: _maxAge, ...clearOptions } = getAuthCookieOptions();
+  res.clearCookie(AUTH_COOKIE_NAME, clearOptions);
+  return res.status(200).json({
+    success: true,
+    message: "Logout successful.",
+  });
+}
+
 module.exports = {
   registerStudent,
   registerTeacher,
+  login,
+  getCurrentUser,
+  logout,
 };

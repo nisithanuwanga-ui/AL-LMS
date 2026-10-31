@@ -1,6 +1,7 @@
 
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 require("dotenv").config();
 const lessonRoutes = require("./routes/lessonRoutes");
@@ -13,8 +14,13 @@ const CLIENT_URL =
   process.env.CLIENT_URL || "http://localhost:5173";
 const MONGODB_URI = process.env.MONGODB_URI;
 
-app.use(cors({ origin: CLIENT_URL }));
+if (CLIENT_URL === "*") {
+  throw new Error("CLIENT_URL must be a specific origin when credentialed CORS is enabled.");
+}
+
+app.use(cors({ origin: CLIENT_URL, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/auth", authRoutes);
