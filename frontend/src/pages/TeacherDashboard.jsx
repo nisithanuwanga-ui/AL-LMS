@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardCard from "../components/DashboardCard";
 import { useLanguage } from "../contexts/useLanguage";
+import { apiRequest, getApiErrorMessage } from "../services/api";
 
-const LESSONS_API_URL = "http://localhost:5000/api/lessons";
 const SUBJECTS = [
   "Physics",
   "Chemistry",
@@ -19,16 +19,8 @@ const EMPTY_FORM = {
   status: "draft",
 };
 
-function getErrorMessage(error, fallback) {
-  return error instanceof Error ? error.message : fallback;
-}
-
-function getApiError(data, fallback) {
-  if (Array.isArray(data.errors) && data.errors.length > 0) {
-    return data.errors.join(" ");
-  }
-
-  return data.message || fallback;
+function getErrorMessage(error, t, fallback) {
+  return getApiErrorMessage(error, t, fallback);
 }
 
 function lessonMatchesFilters(lesson, search, subject) {
@@ -57,16 +49,13 @@ function TeacherDashboard() {
   const deletionLocks = useRef(new Set());
 
   const requestLessons = useCallback(async (searchTerm, subject, signal) => {
-    const url = new URL(LESSONS_API_URL);
-    if (searchTerm.trim()) url.searchParams.set("search", searchTerm.trim());
-    if (subject) url.searchParams.set("subject", subject);
-
-    const response = await fetch(url, { signal });
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(getApiError(data, t("teacher.loadError")));
-    }
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) params.set("search", searchTerm.trim());
+    if (subject) params.set("subject", subject);
+    const query = params.toString();
+    const { data } = await apiRequest(`/lessons${query ? `?${query}` : ""}`, {
+      signal,
+    });
 
     if (!Array.isArray(data.data)) {
       throw new Error(t("teacher.invalidResponse"));
@@ -89,7 +78,7 @@ function TeacherDashboard() {
         if (!controller.signal.aborted) setLessons(loadedLessons);
       } catch (error) {
         if (!controller.signal.aborted && error.name !== "AbortError") {
-          setLessonError(getErrorMessage(error, t("teacher.loadError")));
+          setLessonError(getErrorMessage(error, t, t("teacher.loadError")));
         }
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -196,13 +185,12 @@ function TeacherDashboard() {
     setFormError("");
 
     try {
-      const response = await fetch(
+      const { data } = await apiRequest(
         editingLesson
-          ? `${LESSONS_API_URL}/${encodeURIComponent(editingLesson._id)}`
-          : LESSONS_API_URL,
+          ? `/lessons/${encodeURIComponent(editingLesson._id)}`
+          : "/lessons",
         {
           method: editingLesson ? "PUT" : "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...formData,
             title,
@@ -212,17 +200,6 @@ function TeacherDashboard() {
           }),
         },
       );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          getApiError(
-            data,
-            t(editingLesson ? "teacher.updateError" : "teacher.createError"),
-          ),
-        );
-      }
-
       if (!data.data || typeof data.data !== "object") {
         throw new Error(t("teacher.savedError"));
       }
@@ -245,6 +222,7 @@ function TeacherDashboard() {
       setFormError(
         getErrorMessage(
           error,
+          t,
           t(editingLesson ? "teacher.updateError" : "teacher.createError"),
         ),
       );
@@ -266,22 +244,16 @@ function TeacherDashboard() {
     setActionError("");
 
     try {
-      const response = await fetch(
-        `${LESSONS_API_URL}/${encodeURIComponent(lesson._id)}`,
-        { method: "DELETE" },
-      );
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(getApiError(data, t("teacher.deleteError")));
-      }
+      await apiRequest(`/lessons/${encodeURIComponent(lesson._id)}`, {
+        method: "DELETE",
+      });
 
       setLessons((currentLessons) =>
         currentLessons.filter((currentLesson) => currentLesson._id !== lesson._id),
       );
       setRefreshKey((key) => key + 1);
     } catch (error) {
-      setActionError(getErrorMessage(error, t("teacher.deleteError")));
+      setActionError(getErrorMessage(error, t, t("teacher.deleteError")));
     } finally {
       deletionLocks.current.delete(lesson._id);
       setDeletingLessonId("");

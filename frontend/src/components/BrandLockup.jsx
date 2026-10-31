@@ -15,7 +15,7 @@ function BrandLockup({ className = "" }) {
       </span>
       <span className="brand-copy">
         <span className="brand-name">Nisova Learning</span>
-        <span className="brand-tagline">Empowering Every Learner</span>
+        <span className="brand-tagline">{t("brand.tagline")}</span>
       </span>
     </Link>
   );
