@@ -1,4 +1,7 @@
 const express = require("express");
+const authMiddleware = require("../middleware/authMiddleware");
+const { AUTH_COOKIE_NAME } = require("../utils/authConfig");
+const { requireApprovedTeacher } = require("../middleware/requireRole");
 
 const {
   createLesson,
@@ -10,19 +13,27 @@ const {
 
 const router = express.Router();
 
+function optionalAuthentication(req, res, next) {
+  if (!req.cookies?.[AUTH_COOKIE_NAME]) {
+    return next();
+  }
+
+  return authMiddleware(req, res, next);
+}
+
 // POST /api/lessons - Create a lesson
-router.post("/", createLesson);
+router.post("/", authMiddleware, requireApprovedTeacher, createLesson);
 
 // GET /api/lessons - Get all lessons
-router.get("/", getLessons);
+router.get("/", optionalAuthentication, getLessons);
 
 // GET /api/lessons/:id - Get a single lesson
-router.get("/:id", getLessonById);
+router.get("/:id", optionalAuthentication, getLessonById);
 
 // PUT /api/lessons/:id - Update a lesson
-router.put("/:id", updateLesson);
+router.put("/:id", authMiddleware, requireApprovedTeacher, updateLesson);
 
 // DELETE /api/lessons/:id - Delete a lesson
-router.delete("/:id", deleteLesson);
+router.delete("/:id", authMiddleware, requireApprovedTeacher, deleteLesson);
 
 module.exports = router;

@@ -3,6 +3,31 @@ const Lesson = require("../models/Lesson");
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+function canAccessDraftLessons(user) {
+  return (
+    user?.role === "teacher" &&
+    user.isActive === true &&
+    user.approvalStatus === "approved"
+  );
+}
+
+function ownsLesson(lesson, user) {
+  return Boolean(
+    lesson?.createdBy &&
+      user?.id &&
+      String(lesson.createdBy) === String(user.id)
+  );
+}
+
+function withoutOwner(lesson) {
+  const result =
+    typeof lesson?.toObject === "function"
+      ? lesson.toObject()
+      : { ...lesson };
+  delete result.createdBy;
+  return result;
+}
+
 // CREATE a new lesson
 const createLesson = async (req, res) => {
   try {
@@ -16,12 +41,13 @@ const createLesson = async (req, res) => {
       lessonUrl,
       notesUrl,
       status,
+      createdBy: req.user.id,
     });
 
     res.status(201).json({
       success: true,
       message: "Lesson created successfully",
-      data: lesson,
+      data: withoutOwner(lesson),
     });
   } catch (error) {
     if (error.name === "ValidationError") {
@@ -43,11 +69,16 @@ const createLesson = async (req, res) => {
 const getLessons = async (req, res) => {
   try {
     const { search, subject, status, sort = "newest" } = req.query;
+    const canAccessDrafts = canAccessDraftLessons(req.user);
 
-    const filter = {};
+    const filter = canAccessDrafts ? { createdBy: req.user.id } : {};
 
     if (subject) filter.subject = subject;
-    if (status) filter.status = status;
+    if (canAccessDrafts) {
+      if (status) filter.status = status;
+    } else {
+      filter.status = "published";
+    }
 
     if (typeof search === "string" && search.trim()) {
       filter.title = { $regex: escapeRegex(search.trim()), $options: "i" };
@@ -61,7 +92,7 @@ const getLessons = async (req, res) => {
     res.status(200).json({
       success: true,
       count: lessons.length,
-      data: lessons,
+      data: lessons.map(withoutOwner),
     });
   } catch (error) {
     res.status(500).json({
@@ -92,9 +123,19 @@ const getLessonById = async (req, res) => {
       });
     }
 
+    if (
+      lesson.status !== "published" &&
+      (!canAccessDraftLessons(req.user) || !ownsLesson(lesson, req.user))
+    ) {
+      return res.status(404).json({
+        success: false,
+        message: "Lesson not found",
+      });
+    }
+
     res.status(200).json({
       success: true,
-      data: lesson,
+      data: withoutOwner(lesson),
     });
   } catch (error) {
     res.status(500).json({
@@ -140,10 +181,14 @@ const updateLesson = async (req, res) => {
       });
     }
 
-    const lesson = await Lesson.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    });
+    const lesson = await Lesson.findOneAndUpdate(
+      { _id: id, createdBy: req.user.id },
+      updates,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!lesson) {
       return res.status(404).json({
@@ -155,7 +200,7 @@ const updateLesson = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Lesson updated successfully",
-      data: lesson,
+      data: withoutOwner(lesson),
     });
   } catch (error) {
     if (error.name === "ValidationError") {
@@ -185,7 +230,10 @@ const deleteLesson = async (req, res) => {
       });
     }
 
-    const lesson = await Lesson.findByIdAndDelete(id);
+    const lesson = await Lesson.findOneAndDelete({
+      _id: id,
+      createdBy: req.user.id,
+    });
 
     if (!lesson) {
       return res.status(404).json({

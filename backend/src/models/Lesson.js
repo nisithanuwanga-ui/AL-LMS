@@ -2,6 +2,14 @@ const mongoose = require("mongoose");
 
 const lessonSchema = new mongoose.Schema(
   {
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required() {
+        return this.isNew;
+      },
+    },
+
     title: {
       type: String,
       required: [true, "Lesson title is required"],
