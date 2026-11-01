@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import DashboardCard from "../components/DashboardCard";
 import { useLanguage } from "../contexts/useLanguage";
@@ -17,6 +18,7 @@ const EMPTY_FORM = {
   lessonUrl: "",
   notesUrl: "",
   status: "draft",
+  courseId: "",
 };
 
 function getErrorMessage(error, t, fallback) {
@@ -33,6 +35,8 @@ function lessonMatchesFilters(lesson, search, subject) {
 function TeacherDashboard() {
   const { t } = useLanguage();
   const [lessons, setLessons] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [courseLoadError, setCourseLoadError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [lessonError, setLessonError] = useState("");
   const [actionError, setActionError] = useState("");
@@ -62,6 +66,21 @@ function TeacherDashboard() {
     }
 
     return data.data;
+  }, [t]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    apiRequest("/courses", { signal: controller.signal })
+      .then(({ data }) => {
+        if (!Array.isArray(data.data)) throw new Error(t("courses.invalidResponse"));
+        setCourses(data.data);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setCourseLoadError(getErrorMessage(error, t, t("courses.loadError")));
+        }
+      });
+    return () => controller.abort();
   }, [t]);
 
   useEffect(() => {
@@ -130,6 +149,7 @@ function TeacherDashboard() {
       lessonUrl: lesson.lessonUrl || "",
       notesUrl: lesson.notesUrl || "",
       status: lesson.status || "draft",
+      courseId: lesson.courseId || "",
     });
     setFormError("");
     setIsFormOpen(true);
@@ -150,6 +170,7 @@ function TeacherDashboard() {
     if (!SUBJECTS.includes(formData.subject)) {
       errors.push(t("teacher.subjectValidation"));
     }
+    if (!formData.courseId && !editingLesson) errors.push(t("teacher.courseRequired"));
 
     if (description.length === 0 || description.length > 2000) {
       errors.push(t("teacher.descriptionValidation"));
@@ -185,19 +206,21 @@ function TeacherDashboard() {
     setFormError("");
 
     try {
+      const lessonData = {
+        ...formData,
+        title,
+        description,
+        lessonUrl: formData.lessonUrl.trim(),
+        notesUrl: formData.notesUrl.trim(),
+      };
+      if (editingLesson && !formData.courseId) delete lessonData.courseId;
       const { data } = await apiRequest(
         editingLesson
           ? `/lessons/${encodeURIComponent(editingLesson._id)}`
           : "/lessons",
         {
           method: editingLesson ? "PUT" : "POST",
-          body: JSON.stringify({
-            ...formData,
-            title,
-            description,
-            lessonUrl: formData.lessonUrl.trim(),
-            notesUrl: formData.notesUrl.trim(),
-          }),
+          body: JSON.stringify(lessonData),
         },
       );
       if (!data.data || typeof data.data !== "object") {
@@ -284,9 +307,9 @@ function TeacherDashboard() {
             {t("teacher.quickActions")}
           </h2>
           <div className="actions-list">
-            <button className="secondary-button" type="button">
+            <Link className="secondary-button" to="/teacher/courses">
               {t("teacher.createCourse")}
-            </button>
+            </Link>
             <button
               className="secondary-button"
               type="button"
@@ -352,6 +375,30 @@ function TeacherDashboard() {
                     ))}
                   </select>
                 </label>
+
+                <label className="lesson-form-field">
+                  <span>{t("teacher.course")}</span>
+                  <select
+                    name="courseId"
+                    value={formData.courseId}
+                    onChange={handleFormChange}
+                    required={!editingLesson}
+                    disabled={isSubmitting || courses.length === 0}
+                  >
+                    <option value="">{t("teacher.selectCourse")}</option>
+                    {courses.map((course) => (
+                      <option key={course._id} value={course._id}>{course.title}</option>
+                    ))}
+                  </select>
+                </label>
+                {courseLoadError && (
+                  <p className="form-feedback form-feedback-error lesson-form-field-wide" role="alert">
+                    {courseLoadError}
+                  </p>
+                )}
+                {!courseLoadError && courses.length === 0 && (
+                  <p className="lesson-form-field-wide">{t("teacher.noCourses")} <Link className="text-link" to="/teacher/courses">{t("courses.manageTitle")}</Link></p>
+                )}
 
                 <label className="lesson-form-field lesson-form-field-wide">
                   <span>{t("teacher.description")}</span>

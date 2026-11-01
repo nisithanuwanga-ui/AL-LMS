@@ -31,10 +31,17 @@ function Sidebar() {
       <nav className="sidebar-nav" aria-label={t("nav.main")}>
         <NavLink to="/" end className="sidebar-link">{t("nav.home")}</NavLink>
         {user?.role === "student" && (
-          <NavLink to="/student/dashboard" className="sidebar-link">{t("nav.studentDashboard")}</NavLink>
+          <>
+            <NavLink to="/student/dashboard" className="sidebar-link">{t("nav.studentDashboard")}</NavLink>
+            <NavLink to="/student/courses" className="sidebar-link">{t("courses.myCourses")}</NavLink>
+            <NavLink to="/courses" className="sidebar-link">{t("courses.browseTitle")}</NavLink>
+          </>
         )}
         {user?.role === "teacher" && user.approvalStatus === "approved" && (
-          <NavLink to="/teacher/dashboard" className="sidebar-link">{t("nav.teacherDashboard")}</NavLink>
+          <>
+            <NavLink to="/teacher/dashboard" className="sidebar-link">{t("nav.teacherDashboard")}</NavLink>
+            <NavLink to="/teacher/courses" className="sidebar-link">{t("courses.manageTitle")}</NavLink>
+          </>
         )}
         {user?.role === "teacher" && user.approvalStatus === "pending" && (
           <NavLink to="/teacher/pending" className="sidebar-link">{t("route.pendingTitle")}</NavLink>

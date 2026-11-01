@@ -9,6 +9,11 @@ const lessonSchema = new mongoose.Schema(
         return this.isNew;
       },
     },
+    courseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+      default: undefined,
+    },
 
     title: {
       type: String,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import DashboardCard from "../components/DashboardCard";
 import Sidebar from "../components/Sidebar";
 import { useLanguage } from "../contexts/useLanguage";
@@ -107,18 +107,18 @@ function AdminDashboard() {
         </header>
 
         <nav className="admin-tabs" aria-label={t("admin.navigation")}>
-          <Link className={section === "overview" ? "admin-tab active" : "admin-tab"} to="/admin">
+          <NavLink end className={({ isActive }) => isActive ? "admin-tab active" : "admin-tab"} to="/admin">
             {t("admin.overview")}
-          </Link>
-          <Link className={section === "pending" ? "admin-tab active" : "admin-tab"} to="/admin/teachers/pending">
+          </NavLink>
+          <NavLink className={({ isActive }) => isActive ? "admin-tab active" : "admin-tab"} to="/admin/teachers/pending">
             {t("admin.pendingTitle")}
-          </Link>
-          <Link className={section === "approved" ? "admin-tab active" : "admin-tab"} to="/admin/teachers/approved">
+          </NavLink>
+          <NavLink className={({ isActive }) => isActive ? "admin-tab active" : "admin-tab"} to="/admin/teachers/approved">
             {t("admin.approvedTitle")}
-          </Link>
-          <Link className={section === "rejected" ? "admin-tab active" : "admin-tab"} to="/admin/teachers/rejected">
+          </NavLink>
+          <NavLink className={({ isActive }) => isActive ? "admin-tab active" : "admin-tab"} to="/admin/teachers/rejected">
             {t("admin.rejectedTitle")}
-          </Link>
+          </NavLink>
         </nav>
 
         {feedback && (
@@ -136,9 +136,10 @@ function AdminDashboard() {
               <DashboardCard
                 title={t("admin.pendingCount")}
                 value={isLoading ? "…" : loadError ? "—" : pendingTeachers.length}
+                icon="◷"
               />
-              <DashboardCard title={t("admin.approvedCount")} value="—" />
-              <DashboardCard title={t("admin.rejectedCount")} value="—" />
+              <DashboardCard title={t("admin.approvedCount")} value="—" icon="✓" />
+              <DashboardCard title={t("admin.rejectedCount")} value="—" icon="×" />
             </div>
             <section className="glass-panel admin-info-panel">
               <h2>{t("admin.overviewInfoTitle")}</h2>

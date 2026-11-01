@@ -4,6 +4,7 @@ const express = require("express");
 const { after, afterEach, before, test } = require("node:test");
 
 const Lesson = require("../src/models/Lesson");
+const Course = require("../src/models/Course");
 const controller = require("../src/controllers/lessonController");
 const { requireApprovedTeacher } = require("../src/middleware/requireRole");
 const { AUTH_COOKIE_NAME } = require("../src/utils/authConfig");
@@ -56,6 +57,7 @@ const roles = {
 };
 
 const originalModelMethods = {};
+const originalCourseFindOne = Course.findOne;
 let server;
 let baseUrl;
 
@@ -145,6 +147,7 @@ before(async () => {
   ]) {
     originalModelMethods[name] = Lesson[name];
   }
+  Course.findOne = originalCourseFindOne;
 
   const authModulePath = require.resolve("../src/middleware/authMiddleware");
   const originalAuthModule = require.cache[authModulePath];
@@ -315,8 +318,116 @@ test("teachers can update and delete only their own lessons", async () => {
   assert.equal(deleteFilter.createdBy, teacherA.id);
 });
 
+test("teachers cannot assign a lesson to another teacher's course", async () => {
+  let updateCalls = 0;
+  Course.findOne = async () => null;
+  mockMethod("findOneAndUpdate", async () => {
+    updateCalls += 1;
+    return null;
+  });
+  const response = await request("/aaaaaaaaaaaaaaaaaaaaaaaa", {
+    method: "PUT",
+    cookie: teacherA.id,
+    body: { courseId: "bbbbbbbbbbbbbbbbbbbbbbbb" },
+  });
+  assert.equal(response.status, 404);
+  assert.equal(updateCalls, 0);
+});
+
+test("lesson updates persist all editable fields and can change an owned course", async () => {
+  const firstCourseId = "222222222222222222222222";
+  const secondCourseId = "333333333333333333333333";
+  let updateFilter;
+  let updatePayload;
+  let updateOptions;
+  Course.findOne = async (filter) => (
+    filter.teacherId === teacherA.id && filter._id === secondCourseId
+      ? { _id: secondCourseId, teacherId: teacherA.id }
+      : null
+  );
+  mockMethod("findOneAndUpdate", async (filter, updates, options) => {
+    updateFilter = filter;
+    updatePayload = updates;
+    updateOptions = options;
+    return lesson("aaaaaaaaaaaaaaaaaaaaaaaa", teacherA.id, "draft", {
+      courseId: firstCourseId,
+      title: "Old title",
+      description: "Old description",
+      ...updates,
+    });
+  });
+
+  const response = await request("/aaaaaaaaaaaaaaaaaaaaaaaa", {
+    method: "PUT",
+    cookie: teacherA.id,
+    body: {
+      title: "Updated lesson title",
+      subject: "Chemistry",
+      description: "Updated lesson description",
+      lessonUrl: "https://example.test/lesson",
+      notesUrl: "https://example.test/notes",
+      status: "published",
+      courseId: secondCourseId,
+    },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(updateFilter.createdBy, teacherA.id);
+  assert.deepEqual(updatePayload, {
+    courseId: secondCourseId,
+    title: "Updated lesson title",
+    subject: "Chemistry",
+    description: "Updated lesson description",
+    lessonUrl: "https://example.test/lesson",
+    notesUrl: "https://example.test/notes",
+    status: "published",
+  });
+  assert.equal(updateOptions.new, true);
+  assert.equal(response.body.data.title, "Updated lesson title");
+  assert.equal(response.body.data.description, "Updated lesson description");
+  assert.equal(response.body.data.subject, "Chemistry");
+  assert.equal(response.body.data.lessonUrl, "https://example.test/lesson");
+  assert.equal(response.body.data.notesUrl, "https://example.test/notes");
+  assert.equal(response.body.data.status, "published");
+  assert.equal(response.body.data.courseId, secondCourseId);
+});
+
+test("lesson model declares courseId as a top-level Course reference", () => {
+  const schema = Lesson.schema;
+  assert.equal(schema.path("courseId").options.ref, "Course");
+  assert.equal(schema.path("courseId").instance, "ObjectId");
+  assert.equal(schema.path("createdBy.courseId"), undefined);
+});
+
+test("courseId lesson filtering returns only matching published lessons publicly and own drafts to teachers", async () => {
+  const courseId = "222222222222222222222222";
+  const otherCourseId = "333333333333333333333333";
+  const records = [
+    lesson("1", teacherA.id, "published", { courseId }),
+    lesson("2", teacherA.id, "draft", { courseId }),
+    lesson("3", teacherB.id, "published", { courseId: otherCourseId }),
+  ];
+  mockMethod("find", mockFind(records));
+
+  const publicResponse = await request(`/?courseId=${courseId}`);
+  assert.equal(publicResponse.status, 200);
+  assert.deepEqual(publicResponse.body.data.map((item) => item._id), ["1"]);
+
+  const ownerResponse = await request(`/?courseId=${courseId}`, {
+    cookie: teacherA.id,
+  });
+  assert.equal(ownerResponse.status, 200);
+  assert.deepEqual(ownerResponse.body.data.map((item) => item._id), ["1", "2"]);
+
+  const otherCourseResponse = await request(`/?courseId=${otherCourseId}`, {
+    cookie: teacherA.id,
+  });
+  assert.deepEqual(otherCourseResponse.body.data, []);
+});
+
 test("create assigns owner from authenticated user, ignoring client createdBy", async () => {
   let created;
+  Course.findOne = async (filter) => ({ _id: filter._id, teacherId: filter.teacherId });
   mockMethod("create", async (data) => {
     created = data;
     return lesson("1", data.createdBy, data.status, data);
@@ -330,12 +441,64 @@ test("create assigns owner from authenticated user, ignoring client createdBy", 
       subject: "Physics",
       description: "A valid description",
       status: "draft",
+      courseId: "222222222222222222222222",
       createdBy: teacherB.id,
     },
   });
   assert.equal(response.status, 201);
   assert.equal(created.createdBy, teacherA.id);
+  assert.equal(created.courseId, "222222222222222222222222");
   assert.equal(response.body.data.createdBy, undefined);
+  assert.equal(response.body.data.courseId, created.courseId);
+});
+
+test("lesson creation requires a course owned by the authenticated teacher", async () => {
+  const courseId = "222222222222222222222222";
+  Course.findOne = async (filter) => (
+    filter.teacherId === teacherA.id && filter._id === courseId
+      ? { _id: courseId, teacherId: teacherA.id }
+      : null
+  );
+  mockMethod("create", async (data) => lesson("1", data.createdBy, data.status, data));
+
+  const foreignCourse = await request("/", {
+    method: "POST",
+    cookie: teacherA.id,
+    body: {
+      title: "Course lesson",
+      subject: "Physics",
+      description: "A valid description",
+      courseId: "333333333333333333333333",
+    },
+  });
+  assert.equal(foreignCourse.status, 404);
+
+  const invalidCourse = await request("/", {
+    method: "POST",
+    cookie: teacherA.id,
+    body: { title: "Course lesson", courseId: "invalid" },
+  });
+  assert.equal(invalidCourse.status, 400);
+
+  const validCourse = await request("/", {
+    method: "POST",
+    cookie: teacherA.id,
+    body: {
+      title: "Course lesson",
+      subject: "Physics",
+      description: "A valid description",
+      courseId,
+    },
+  });
+  assert.equal(validCourse.status, 201);
+  assert.equal(validCourse.body.data.courseId, courseId);
+});
+
+test("legacy lessons without courseId remain publicly readable", async () => {
+  mockMethod("findById", async () => lesson("1", teacherA.id, "published"));
+  const response = await request("/aaaaaaaaaaaaaaaaaaaaaaaa");
+  assert.equal(response.status, 200);
+  assert.equal(response.body.data.courseId, undefined);
 });
 
 test("unauthenticated writes return 401", async () => {
@@ -417,6 +580,7 @@ test("invalid lesson IDs and validation errors retain API responses", async () =
   mockMethod("create", async () => {
     throw validationError;
   });
+  Course.findOne = async () => ({ _id: "222222222222222222222222" });
   const createResponse = await request("/", {
     method: "POST",
     cookie: teacherA.id,
@@ -424,6 +588,7 @@ test("invalid lesson IDs and validation errors retain API responses", async () =
       title: "x",
       subject: "Physics",
       description: "A valid description",
+      courseId: "222222222222222222222222",
     },
   });
   assert.equal(createResponse.status, 400);

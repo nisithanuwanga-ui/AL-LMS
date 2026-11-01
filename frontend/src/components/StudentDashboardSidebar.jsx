@@ -32,9 +32,12 @@ function StudentDashboardSidebar() {
         <NavLink to="/student/dashboard" end className="sidebar-link">
           <span aria-hidden="true">⌂</span>{t("student.navOverview")}
         </NavLink>
-        <a className="sidebar-link" href="#my-courses">
-          <span aria-hidden="true">▤</span>{t("student.myCourses")}
-        </a>
+        <NavLink to="/student/courses" className="sidebar-link">
+          <span aria-hidden="true">▤</span>{t("courses.myCourses")}
+        </NavLink>
+        <NavLink to="/courses" className="sidebar-link">
+          <span aria-hidden="true">⌕</span>{t("courses.browseTitle")}
+        </NavLink>
         <a className="sidebar-link" href="#study-packs">
           <span aria-hidden="true">▧</span>{t("student.studyPacks")}
         </a>

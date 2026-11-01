@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import StudentDashboardSidebar from "./StudentDashboardSidebar";
 import DashboardCard from "./DashboardCard";
 import { useLanguage } from "../contexts/useLanguage";
 import { languageLocales } from "../i18n/translations";
 import { useAuth } from "../contexts/useAuth";
 import { apiRequest, getApiErrorMessage } from "../services/api";
+import { getSafeExternalUrl } from "../services/safeUrl";
 
 const SUBJECTS = [
   "Physics",
@@ -12,24 +14,6 @@ const SUBJECTS = [
   "Biology",
   "Combined Mathematics",
 ];
-
-function getSafeExternalUrl(value) {
-  if (typeof value !== "string" || !value.trim()) return null;
-
-  try {
-    const url = new URL(value.trim());
-    if (
-      (url.protocol === "https:" || url.protocol === "http:") &&
-      url.hostname
-    ) {
-      return url.href;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
 
 function formatCreatedDate(value, locale) {
   if (!value) return null;
@@ -53,6 +37,9 @@ function StudentDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
+  const [enrollments, setEnrollments] = useState([]);
+  const [enrollmentLoading, setEnrollmentLoading] = useState(true);
+  const [enrollmentError, setEnrollmentError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -90,6 +77,32 @@ function StudentDashboard() {
     return () => controller.abort();
   }, [retryCount, t]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadEnrollments() {
+      if (!user) {
+        setEnrollments([]);
+        setEnrollmentLoading(false);
+        return;
+      }
+      setEnrollmentLoading(true);
+      setEnrollmentError("");
+      try {
+        const { data } = await apiRequest("/enrollments/mine", { signal: controller.signal });
+        if (!Array.isArray(data.data)) throw new Error(t("courses.invalidResponse"));
+        if (!controller.signal.aborted) setEnrollments(data.data);
+      } catch (requestError) {
+        if (!controller.signal.aborted) {
+          setEnrollmentError(getApiErrorMessage(requestError, t, t("courses.loadError")));
+        }
+      } finally {
+        if (!controller.signal.aborted) setEnrollmentLoading(false);
+      }
+    }
+    loadEnrollments();
+    return () => controller.abort();
+  }, [user, t]);
+
   function getSubjectLabel(value) {
     const subjectKeys = {
       Physics: "subject.physics",
@@ -104,14 +117,6 @@ function StudentDashboard() {
   const visibleLessons = subject
     ? lessons.filter((lesson) => lesson.subject === subject)
     : lessons;
-
-  function showSubjectLessons(value) {
-    setSubject(value);
-    document.getElementById("continue-learning")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }
 
   return (
     <div className="app-shell dashboard-layout">
@@ -161,34 +166,33 @@ function StudentDashboard() {
             </div>
             <p>{t("student.coursesDescription")}</p>
           </div>
-          {isLoading ? (
-            <p className="lessons-feedback" role="status">{t("student.loading")}</p>
-          ) : error ? (
-            <p className="lessons-feedback">{t("student.courseDataUnavailable")}</p>
-          ) : availableSubjects.length === 0 ? (
-            <p className="lessons-feedback">{t("student.coursesEmpty")}</p>
+          {enrollmentLoading ? (
+            <p className="lessons-feedback" role="status">{t("courses.loading")}</p>
+          ) : enrollmentError ? (
+            <p className="lessons-feedback lessons-feedback-error" role="alert">{enrollmentError}</p>
+          ) : enrollments.length === 0 ? (
+            <div className="lessons-feedback">
+              <p>{t("courses.noEnrollments")}</p>
+              <Link className="text-link" to="/courses">{t("courses.browseTitle")}</Link>
+            </div>
           ) : (
             <div className="student-course-grid">
-              {availableSubjects.map((courseSubject) => {
-                const courseLessons = lessons.filter((lesson) => lesson.subject === courseSubject);
+              {enrollments.map((item) => {
+                const enrolledCourse = item.courseId;
+                if (!enrolledCourse) return null;
                 return (
-                  <button
+                  <Link
                     className="student-course-card glass-panel"
-                    key={courseSubject}
-                    type="button"
-                    onClick={() => showSubjectLessons(courseSubject)}
+                    key={item._id}
+                    to={`/courses/${enrolledCourse._id}`}
                   >
                     <span className="student-course-symbol" aria-hidden="true">
-                      {courseSubject.slice(0, 1)}
+                      {enrolledCourse.subject.slice(0, 1)}
                     </span>
-                    <span className="student-course-name">{getSubjectLabel(courseSubject)}</span>
-                    <span className="student-course-count">
-                      {t(courseLessons.length === 1 ? "student.lessonCountOne" : "student.lessonCount", {
-                        count: courseLessons.length,
-                      })}
-                    </span>
-                    <span className="student-course-action">{t("student.exploreCourse")} <span aria-hidden="true">→</span></span>
-                  </button>
+                    <span className="student-course-name">{enrolledCourse.title}</span>
+                    <span className="student-course-count">{getSubjectLabel(enrolledCourse.subject)} · {enrolledCourse.medium}</span>
+                    <span className="student-course-action">{t("courses.continue")} <span aria-hidden="true">→</span></span>
+                  </Link>
                 );
               })}
             </div>

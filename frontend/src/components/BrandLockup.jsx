@@ -6,13 +6,11 @@ function BrandLockup({ className = "" }) {
 
   return (
     <Link to="/" className={`brand brand-lockup ${className}`.trim()}>
-      <span className="brand-logo-frame">
-        <img
-          className="brand-logo"
-          src="/nisova-logo.png"
-          alt={t("brand.logoAlt")}
-        />
-      </span>
+      <img
+        className="brand-logo"
+        src="/nisova-logo-transparent.png"
+        alt={t("brand.logoAlt")}
+      />
       <span className="brand-copy">
         <span className="brand-name">Nisova Learning</span>
         <span className="brand-tagline">{t("brand.tagline")}</span>

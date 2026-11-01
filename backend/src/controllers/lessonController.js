@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Lesson = require("../models/Lesson");
+const Course = require("../models/Course");
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -31,6 +32,23 @@ function withoutOwner(lesson) {
 // CREATE a new lesson
 const createLesson = async (req, res) => {
   try {
+    const { courseId } = req.body;
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid course ID is required",
+      });
+    }
+    const course = await Course.findOne({
+      _id: courseId,
+      teacherId: req.user.id,
+    });
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
     const { title, subject, description, lessonUrl, notesUrl, status } =
       req.body;
 
@@ -42,6 +60,7 @@ const createLesson = async (req, res) => {
       notesUrl,
       status,
       createdBy: req.user.id,
+      courseId,
     });
 
     res.status(201).json({
@@ -73,6 +92,15 @@ const getLessons = async (req, res) => {
 
     const filter = canAccessDrafts ? { createdBy: req.user.id } : {};
 
+    if (req.query.courseId !== undefined) {
+      if (!mongoose.isValidObjectId(req.query.courseId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid course ID",
+        });
+      }
+      filter.courseId = req.query.courseId;
+    }
     if (subject) filter.subject = subject;
     if (canAccessDrafts) {
       if (status) filter.status = status;
@@ -158,6 +186,7 @@ const updateLesson = async (req, res) => {
     }
 
     const allowedFields = [
+      "courseId",
       "title",
       "subject",
       "description",
@@ -179,6 +208,25 @@ const updateLesson = async (req, res) => {
         success: false,
         message: "No valid fields provided for update",
       });
+    }
+
+    if (updates.courseId !== undefined) {
+      if (!mongoose.isValidObjectId(updates.courseId)) {
+        return res.status(400).json({
+          success: false,
+          message: "A valid course ID is required",
+        });
+      }
+      const course = await Course.findOne({
+        _id: updates.courseId,
+        teacherId: req.user.id,
+      });
+      if (!course) {
+        return res.status(404).json({
+          success: false,
+          message: "Course not found",
+        });
+      }
     }
 
     const lesson = await Lesson.findOneAndUpdate(

@@ -8,6 +8,8 @@ const { getCorsOptions } = require("./config/corsConfig");
 const lessonRoutes = require("./routes/lessonRoutes");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const courseRoutes = require("./routes/courseRoutes");
+const enrollmentRoutes = require("./routes/enrollmentRoutes");
 
 const app = express();
 
@@ -21,6 +23,8 @@ app.use(cookieParser());
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/enrollments", enrollmentRoutes);
 
 function handleApiError(error, req, res, next) {
   if (res.headersSent) {
@@ -49,6 +53,8 @@ function handleApiError(error, req, res, next) {
 
 app.use("/api/auth", handleApiError);
 app.use("/api/admin", handleApiError);
+app.use("/api/courses", handleApiError);
+app.use("/api/enrollments", handleApiError);
 
 app.get("/", (req, res) => {
   res.json({ message: "AL LMS Backend API is running!" });

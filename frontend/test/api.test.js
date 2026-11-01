@@ -29,6 +29,26 @@ test("API client uses its configured base and includes cookie credentials", asyn
   assert.equal(result.data.success, true);
 });
 
+test("course and enrollment API requests use the shared authenticated client", async () => {
+  const requests = [];
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, options });
+    return new Response('{"success":true,"data":[]}', {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  await apiRequest("/courses?subject=Physics");
+  await apiRequest("/enrollments/mine");
+
+  assert.deepEqual(requests.map(({ url }) => url), [
+    `${API_BASE_URL}/courses?subject=Physics`,
+    `${API_BASE_URL}/enrollments/mine`,
+  ]);
+  assert.ok(requests.every(({ options }) => options.credentials === "include"));
+});
+
 test("API client preserves server error messages and status", async () => {
   globalThis.fetch = async () =>
     new Response('{"success":false,"message":"Application not found."}', {

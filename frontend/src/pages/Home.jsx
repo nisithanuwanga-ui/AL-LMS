@@ -12,7 +12,7 @@ const pathways = [
     descriptionKey: "home.courseDescription",
     statusKey: "home.learningPreview",
     available: true,
-    href: "/student/dashboard",
+    href: "/courses",
     actionKey: "home.explorePublished",
   },
   {
@@ -51,7 +51,7 @@ function Home() {
           <BrandLockup className="public-brand" />
 
           <div className="public-nav-links">
-            <a className="nav-link" href="#courses">{t("nav.courses")}</a>
+            <Link className="nav-link" to="/courses">{t("nav.courses")}</Link>
             <a className="nav-link" href="#study-packs">{t("nav.studyPacks")}</a>
             <a className="nav-link" href="#printed-books">{t("nav.books")}</a>
             <a className="nav-link" href="#teachers">{t("nav.teachers")}</a>
@@ -188,7 +188,10 @@ function Home() {
         <div className="site-footer-inner page-width">
           <BrandLockup className="footer-brand" />
           <p>{t("home.footer")}</p>
-          <span className="footer-note">{t("home.project")}</span>
+          <span className="footer-note">
+            <span>{t("home.developedBy")}</span>
+            <strong>Nisitha Sandanayake</strong>
+          </span>
         </div>
       </footer>
     </div>
